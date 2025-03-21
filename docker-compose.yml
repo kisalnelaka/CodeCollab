@@ -1,0 +1,63 @@
+version: '3'
+
+services:
+  # PHP Laravel Backend
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/var/www/html
+    depends_on:
+      - db
+    environment:
+      - DB_HOST=db
+      - DB_PORT=3306
+      - DB_DATABASE=codecollab
+      - DB_USERNAME=codecollab
+      - DB_PASSWORD=secret
+
+  # React Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+    environment:
+      - REACT_APP_API_URL=http://localhost:8000/api
+
+  # MySQL Database
+  db:
+    image: mysql:8.0
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_DATABASE=codecollab
+      - MYSQL_USER=codecollab
+      - MYSQL_PASSWORD=secret
+      - MYSQL_ROOT_PASSWORD=secret
+    volumes:
+      - db_data:/var/lib/mysql
+
+  # Pusher Server for WebSockets
+  pusher:
+    image: soketi/soketi:latest
+    ports:
+      - "6001:6001"
+    environment:
+      - DEBUG=1
+      - SOKETI_DEBUG=1
+      - SOKETI_DEFAULT_APP_ID=app-id
+      - SOKETI_DEFAULT_APP_KEY=app-key
+      - SOKETI_DEFAULT_APP_SECRET=app-secret
+
+volumes:
+  db_data:
